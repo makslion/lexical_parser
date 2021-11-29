@@ -1,0 +1,8 @@
+following format is expected:
+
+word part_of_speech root number
+
+word - input string
+part_of_speech - part of speech of that word. Must match "English Lexical Categories" from rules
+root - root of the word. in case it has no root - put here the word itself
+number - singular (s) or plural (p) if applicable. If not applicable or can be both - (sp)

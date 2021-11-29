@@ -1,0 +1,23 @@
+English Lexical Categories
+v verb
+n noun
+adj adjective
+adv adverb
+p preposition
+det determiner
+cor co-ordinator/conjunction
+subord subordinator/complementiser
+e nothing
+
+Phrasal Categories
+S  sentence (used for parser)
+NP noun phrase
+VP verb phrase
+PP prepositional phrase
+AP adjectival phrase
+ADVP adverbial phrase
+QP quantifier phrase
+
+rules are written down as a context free grammar.
+For example rule "S -> NP VP" will be written as "S NP VP"
+Rules don't support "|" symbol so "NP -> n | det n" should be written as two separate rules "NP n" and "NP det n"
