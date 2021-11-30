@@ -1,4 +1,4 @@
-S NP VP PP AP ADVP QP v n adj adv p det cor subord e
+S NP VP PP AP ADVP QP v n adj adv p det cor subord
 S NP VP
 NP n
 NP det n

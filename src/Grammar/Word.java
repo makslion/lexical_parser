@@ -15,18 +15,18 @@ public class Word {
     }
 
     public String getWord() {
-        return word;
+        return (word == null) ? "" : word;
     }
 
     public String getPos() {
-        return pos;
+        return (pos == null) ? "" : pos;
     }
 
     public String getRoot() {
-        return root;
+        return (root == null) ? "" : root;
     }
 
     public String getNumber() {
-        return number;
+        return (number == null) ? "" : number;
     }
 }

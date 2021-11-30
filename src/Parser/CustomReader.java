@@ -6,7 +6,9 @@ import Grammar.Rules;
 import Grammar.Word;
 
 import java.io.*;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Queue;
 
 public class CustomReader {
     private String lexiconFileName = "src//Grammar//lexicon.txt";

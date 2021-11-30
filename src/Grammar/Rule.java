@@ -13,4 +13,20 @@ public class Rule {
         for (int i = 1; i < lineSplitted.length; i++)
             rule.add(lineSplitted[i]);
     }
+
+    public String getHead() {
+        return head;
+    }
+
+    public List<String> describeRule() {
+        return rule;
+    }
+
+    @Override
+    public String toString() {
+        String tail = "";
+        for (String entry : rule)
+            tail += entry+" ";
+        return head+" -> "+tail;
+    }
 }
