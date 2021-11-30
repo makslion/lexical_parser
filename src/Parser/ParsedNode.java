@@ -1,6 +1,7 @@
 package Parser;
 
 import Grammar.Rule;
+import Grammar.Word;
 
 import java.util.ArrayList;
 
@@ -9,12 +10,13 @@ public class ParsedNode {
     private String element;
     private String pos;
 
-    public ParsedNode() {
+    public void setPos(String pos) {
+        this.pos = pos;
     }
 
-    public void addCurrent(String element, String pos){
-        this.element = element;
-        this.pos = pos;
+    public void setWord(Word word){
+        this.pos = word.getPos();
+        this.element = word.getWord();
     }
 
     public void addChildren(ParsedNode parsedNode){
@@ -23,6 +25,16 @@ public class ParsedNode {
 
     @Override
     public String toString() {
-        return null;
+        String output = "[";
+        if (!children.isEmpty()){
+            output += pos;
+            for (ParsedNode node : children)
+                output += node.toString();
+            output += "]";
+        } else
+            output += pos+"["+element+"]]";
+        return output;
     }
+
+    // [S[NP[det[the]][n[man]]][VP[v[bites]][NP[det[a]][n[dog]]]]]
 }

@@ -7,6 +7,7 @@ import Grammar.Word;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 
 public class Parser {
@@ -57,59 +58,57 @@ public class Parser {
 
     private void buildTree(){
         System.out.println("Building tree");
-        ParsedNode tree = expandRule(rules.getBaseRule(), false);
+        ParsedNode tree = expandRule(rules.getBaseRule(), true);
 //        if out terminals - success
 //        else if !has rules and !has terminals throw an exception
-        if (!text.isEmpty()){
+        if (!taggedText.isEmpty()){
             System.err.println("evaluated all rules but have "+text+" left");
             System.exit(1);
         }
-        System.out.println("Tree build");
+        System.out.println("Tree build:");
+        System.out.println(tree);
 //        print tree
     }
 
     // takes non terminal and returns node
-    private ParsedNode expandRule(Rule rule, boolean canFail){
+    private ParsedNode expandRule(Rule rule, boolean lastRule){
 //        create a new node
         ParsedNode node = new ParsedNode();
         //        for each in rule
-        for (String childRule : rule.describeRule()){
-            if (isTerminal(childRule)){
+        node.setPos(rule.getHead());
+        List<String> describeRule = rule.describeRule();
+        for (int j = 0; j < describeRule.size(); j++) {
+            String childRule = describeRule.get(j);
+            boolean lastChildRule = (j == describeRule.size() - 1) && lastRule;
+            if (isTerminal(childRule)) {
                 Word currentWord = taggedText.peek();
                 //                if match add to node
                 if (currentWord.getPos().equals(childRule)) {
                     // consume token
                     taggedText.poll();
-                    node.addCurrent(childRule, currentWord.getPos());
+                    ParsedNode childNode = new ParsedNode();
+                    childNode.setWord(currentWord);
+                    node.addChildren(childNode);
                     //                if don't throw exception
-                } else if (!canFail){
+                } else if (lastRule) {
                     System.err.println("Evaluating rule: " + rule);
                     System.err.println("Looking for " + childRule + " but found " + currentWord.getPos());
                     System.exit(1);
                 }
             } else {
                 ArrayList<Rule> matchedRules = rules.getRule(childRule);
-                if (matchedRules.size() > 1){
-                    matchedRules = getValidRules();
+                if (matchedRules.size() > 1) {
+                    matchedRules = getValidRules(matchedRules, taggedText, lastChildRule);
                 }
 
-                for (int i = 0; i < matchedRules.size(); i++){
+                for (int i = 0; i < matchedRules.size(); i++) {
                     Rule currentRule = matchedRules.get(i);
-                    canFail = i < matchedRules.size() - 1;
                     if (taggedText.isEmpty()) {
                         System.err.println("Was about to evaluate " + currentRule);
                         System.err.println("but out of text");
                         System.exit(1);
                     }
-                    boolean ruleEvaluates = predictRule(currentRule, new ArrayDeque<>(taggedText));
-                    if (ruleEvaluates)
-                        node.addChildren(expandRule(currentRule,canFail));
-                    else if (!canFail){
-                        System.err.println("Run out of rules trying to parse: "+printQueue(taggedText));
-                        System.err.println("Was looking for rules "+currentRule.getHead()+" -> ...");
-                        System.exit(1);
-                    }
-
+                    node.addChildren(expandRule(currentRule, lastChildRule));
                 }
             }
         }
@@ -117,21 +116,27 @@ public class Parser {
     }
 
 
-    private ArrayList<Rule> getValidRules(){
-        return null;
+    private ArrayList<Rule> getValidRules(ArrayList<Rule> matchedRules, Queue<Word> passedText, boolean lastRule){
+        matchedRules.removeIf(rule -> !predictRule(rule, passedText, lastRule));
+        return matchedRules;
     }
 
 
-    private boolean predictRule(Rule rule, Queue<Word> taggedTextCoppy){
-        boolean ruleValid = true;
-
+    private boolean predictRule(Rule rule, Queue<Word> passedText, boolean lastRule){
+        Queue<Word> taggedTextCoppy = new ArrayDeque<>(passedText);
         for (String childRule : rule.describeRule()){
-            // how to fail VP -> v
-            // and pass VP -> v NP
-
+            if (isTerminal(childRule)) {
+                Word currentWord = taggedTextCoppy.peek();
+                if (currentWord.getPos().equals(childRule)) {
+                    taggedTextCoppy.poll();
+                } else
+                    return false;
+            } else{
+                ArrayList<Rule> subRules = getValidRules(rules.getRule(childRule), taggedTextCoppy, lastRule);
+                return !subRules.isEmpty();
+            }
         }
-
-        return ruleValid;
+        return !lastRule || taggedTextCoppy.isEmpty();
     }
 
     public boolean isTerminal(String candidate){
