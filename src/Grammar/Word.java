@@ -13,6 +13,8 @@ public class Word {
         root = lineSplitted[2];
         number = lineSplitted[3];
     }
+    public Word() {
+    }
 
     public String getWord() {
         return (word == null) ? "" : word;
@@ -28,5 +30,21 @@ public class Word {
 
     public String getNumber() {
         return (number == null) ? "" : number;
+    }
+
+    public void setWord(String word) {
+        this.word = word;
+    }
+
+    public void setPos(String pos) {
+        this.pos = pos;
+    }
+
+    public void setRoot(String root) {
+        this.root = root;
+    }
+
+    public void setNumber(String number) {
+        this.number = number;
     }
 }

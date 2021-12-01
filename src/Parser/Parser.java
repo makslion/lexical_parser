@@ -28,7 +28,6 @@ public class Parser {
             System.err.println("Lexicon is not recognized");
             System.exit(1);
         } else {
-            System.out.println("Lexicon is recognized");
             tagText();
             buildTree();
         }
@@ -53,7 +52,6 @@ public class Parser {
             }
             taggedText.add(tmp);
         }
-        System.out.println("Text tagged");
     }
 
     private void buildTree(){
@@ -65,6 +63,8 @@ public class Parser {
             System.err.println("evaluated all rules but have "+text+" left");
             System.exit(1);
         }
+        System.out.println("Checking tree numbers");
+        checkTreeNumbers(tree);
         System.out.println("Tree build:");
         System.out.println(tree);
 //        print tree
@@ -152,5 +152,25 @@ public class Parser {
         while (!queue.isEmpty())
             output += queue.poll().getWord()+" ";
         return output;
+    }
+
+
+    private void checkTreeNumbers(ParsedNode tree){
+        ParsedNode vp, np;
+        vp = np = new ParsedNode();
+
+        for (ParsedNode child : tree.getChildren()){
+            if (child.getPOS().equals("NP"))
+                np = child;
+            else if (child.getPOS().equals("VP"))
+                vp = child;
+        }
+        if (!vp.getNumber().contains(np.getNumber()) && !np.getNumber().contains(vp.getNumber())){
+            System.err.println("Numbers in VP vs NP does not match");
+            System.err.println("NP("+np.getNumber()+"): "+np);
+            System.err.println("VP("+vp.getNumber()+"): "+vp);
+            System.exit(1);
+        }
+
     }
 }
