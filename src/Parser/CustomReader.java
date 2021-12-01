@@ -6,14 +6,25 @@ import Grammar.Rules;
 import Grammar.Word;
 
 import java.io.*;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Queue;
+import java.util.Arrays;
 
+
+/**
+ * CustomReader is used to read text files that contain lexicon, rules and text to parse.
+ * <p>{@link #readLexicon()}</p>
+ * <p>{@link #readRules(Rules)}</p>
+ * <p>{@link #readSentence(File)}</p>
+ */
 public class CustomReader {
-    private String lexiconFileName = "src//Grammar//lexicon.txt";
-    private String rulesFileName = "src//Grammar//rules.txt";
+    private final String lexiconFileName = "src//Grammar//lexicon.txt";
+    private final String rulesFileName = "src//Grammar//rules.txt";
 
+    /**
+     * readLexicon() reads a lexicon from the hardcoded text file at Grammar/lexicon.txt. It converts it into
+     * an array list of Word
+     * @return ArrayList<Word> with words read from the file or an empty ArrayList in case of error reading or processing
+     */
     public ArrayList<Word> readLexicon(){
         ArrayList<Word> words = new ArrayList<>();
         File lexiconFile = new File(lexiconFileName);
@@ -34,21 +45,24 @@ public class CustomReader {
         return words;
     }
 
+    /**
+     * Read a set of grammar rules from hardcoded file at Grammar/rules.txt. It populates passed in Rules class with the
+     * content of that file.
+     * @param rulesClass rules object to be populated with Rules and parts of speech
+     */
     public void readRules(Rules rulesClass){
         ArrayList<Rule> rules = new ArrayList<>();
         File rulesFile = new File(rulesFileName);
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(rulesFile));
             String line;
-
-            // read first line
             rulesClass.setPartsOfSpeech(new POS(bufferedReader.readLine()));
 
             while ((line = bufferedReader.readLine()) != null)
                 rules.add(new Rule(line));
 
         } catch (FileNotFoundException e) {
-            System.err.println("File "+lexiconFileName+" not found");
+            System.err.println("File "+ rulesFileName +" not found");
             e.printStackTrace();
         } catch (IOException e){
             System.err.println("IO Exception while reading lexicon file");
@@ -57,54 +71,31 @@ public class CustomReader {
         rulesClass.setRules(rules);
     }
 
-    public ArrayList<String> readSentence(File file){
+    /**
+     * readSentence reads sentences from provided file
+     * @param file with sentences to be read
+     * @return ArrayList of sentences where each sentence is an ArrayList of Strings that represent words
+     */
+    public ArrayList<ArrayList<String>> readSentence(File file){
         ArrayList<String> sentence = new ArrayList<>();
-        StringBuilder word = new StringBuilder();
-
+        ArrayList<ArrayList<String>> text = new ArrayList<>();
         try {
-            FileReader fileReader = new FileReader(file);
-
-            int character;
-            while ( (character = fileReader.read()) != -1){
-                char convertedCharacter = (char) character;
-
-                if (convertedCharacter == ' '){
-                    sentence.add(word.toString());
-                    word = new StringBuilder();
-                } else{
-                    word.append(convertedCharacter);
-                }
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                sentence.clear();
+                String [] lineSplit = line.split(" ");
+                sentence.addAll(Arrays.asList(lineSplit));
+                text.add(sentence);
             }
-
-            // add the final word if the sentence ended not with a space
-            if (word.length() > 0 && !word.toString().equals(" "))
-                sentence.add(word.toString());
-
         } catch (FileNotFoundException e) {
-            System.err.println("File "+file.getPath()+" not found!");
+            System.err.println("File "+file.getName()+" at "+file.getPath()+" not found");
             e.printStackTrace();
         } catch (IOException e){
-            System.err.println("IO Exception while reading the file");
+            System.err.println("IO Exception while reading lexicon file");
             e.printStackTrace();
         }
-        return sentence;
-    }
 
-
-
-    public String getLexiconFileName() {
-        return lexiconFileName;
-    }
-
-    public void setLexiconFileName(String lexiconFileName) {
-        this.lexiconFileName = lexiconFileName;
-    }
-
-    public String getRulesFileName() {
-        return rulesFileName;
-    }
-
-    public void setRulesFileName(String rulesFileName) {
-        this.rulesFileName = rulesFileName;
+        return text;
     }
 }

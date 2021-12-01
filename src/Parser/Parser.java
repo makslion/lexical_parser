@@ -10,19 +10,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
+/**
+ * Parser object. Utilizes {@link Lexicon}, {@link Rules}, {@link Word} to parse text and output parsed tree
+ * <p>{@link #Parser(CustomReader)}</p>
+ * <p>{@link #parse(ArrayList)}</p>
+ */
 public class Parser {
     private ArrayList<String> text;
     private Queue<Word> taggedText;
-    private Lexicon lexicon;
-    private Rules rules;
+    private final Lexicon lexicon;
+    private final Rules rules;
 
-    public Parser(CustomReader reader, ArrayList<String> text) {
-        this.text = text;
+    /**
+     * @param reader reader to obtain {@link Lexicon} and {@link Rules} objects
+     */
+    public Parser(CustomReader reader) {
         lexicon = new Lexicon(reader);
         rules = new Rules(reader);
     }
 
-    public void parse (){
+    /**
+     * Parse provided text. Will output a parse tree to a terminal.
+     * @param text ArrayList that represents a sentence and each  String inside represents a word in a sentence.
+     */
+    public void parse (ArrayList<String> text){
+        this.text = text;
         System.out.println("Checking lexicon");
         if (!lexiconRecognized()){
             System.err.println("Lexicon is not recognized");
@@ -33,6 +45,9 @@ public class Parser {
         }
     }
 
+    /**
+     * @return false if at least one word in passed text in no recognized by a lexicon
+     */
     private boolean lexiconRecognized(){
         for (String word : text)
             if (!lexicon.contains(word))
@@ -40,7 +55,9 @@ public class Parser {
         return true;
     }
 
-
+    /**
+     * Tags passed in text. Produces Queue<Word> taggedText as a result
+     */
     private void tagText(){
         System.out.println("Tagging text");
         taggedText = new ArrayDeque<>();
@@ -54,11 +71,12 @@ public class Parser {
         }
     }
 
+    /**
+     * Build and outputs a parseTree
+     */
     private void buildTree(){
         System.out.println("Building tree");
         ParsedNode tree = expandRule(rules.getBaseRule(), true);
-//        if out terminals - success
-//        else if !has rules and !has terminals throw an exception
         if (!taggedText.isEmpty()){
             System.err.println("evaluated all rules but have "+text+" left");
             System.exit(1);
@@ -66,48 +84,48 @@ public class Parser {
         System.out.println("Checking tree numbers");
         checkTreeNumbers(tree);
         System.out.println("Tree build:");
-        System.out.println(tree);
-//        print tree
+        System.out.println(tree+"\n");
     }
 
-    // takes non terminal and returns node
+    /**
+     * Recursive method that expands rule passed inside.
+     * @param rule to be expanded and parsed
+     * @param lastRule used to track the last rule in case multiple were tried
+     * @return a {@link ParsedNode} that contains parsed Rule
+     */
     private ParsedNode expandRule(Rule rule, boolean lastRule){
-//        create a new node
         ParsedNode node = new ParsedNode();
-        //        for each in rule
         node.setPos(rule.getHead());
         List<String> describeRule = rule.describeRule();
         for (int j = 0; j < describeRule.size(); j++) {
             String childRule = describeRule.get(j);
             boolean lastChildRule = (j == describeRule.size() - 1) && lastRule;
             if (isTerminal(childRule)) {
-                Word currentWord = taggedText.peek();
-                //                if match add to node
+                // consuming token on valid terminal
+                Word currentWord = taggedText.poll();
+                assert currentWord != null;
                 if (currentWord.getPos().equals(childRule)) {
-                    // consume token
-                    taggedText.poll();
+                    // this node will be a leaf in a tree. Exit statement for a recursion
                     ParsedNode childNode = new ParsedNode();
                     childNode.setWord(currentWord);
                     node.addChildren(childNode);
-                    //                if don't throw exception
                 } else if (lastRule) {
                     System.err.println("Evaluating rule: " + rule);
                     System.err.println("Looking for " + childRule + " but found " + currentWord.getPos());
                     System.exit(1);
                 }
+            // if it is a non-terminal
             } else {
-                ArrayList<Rule> matchedRules = rules.getRule(childRule);
-                if (matchedRules.size() > 1) {
-                    matchedRules = getValidRules(matchedRules, taggedText, lastChildRule);
-                }
+                //filtering rules
+                ArrayList<Rule> matchedRules = getValidRules(rules.getRule(childRule), taggedText, lastChildRule);
 
-                for (int i = 0; i < matchedRules.size(); i++) {
-                    Rule currentRule = matchedRules.get(i);
+                for (Rule currentRule : matchedRules) {
                     if (taggedText.isEmpty()) {
                         System.err.println("Was about to evaluate " + currentRule);
                         System.err.println("but out of text");
                         System.exit(1);
                     }
+                    // recursive call only in valid rules
                     node.addChildren(expandRule(currentRule, lastChildRule));
                 }
             }
@@ -116,33 +134,56 @@ public class Parser {
     }
 
 
+    /**
+     * Used to remove rules from the ArrayList that will not satisfy passed inside text
+     * @param matchedRules list of rules to validate
+     * @param passedText text to be used for rules validation
+     * @param lastRule boolean to track the last rule
+     * @return cleaned up list of rules
+     */
     private ArrayList<Rule> getValidRules(ArrayList<Rule> matchedRules, Queue<Word> passedText, boolean lastRule){
         matchedRules.removeIf(rule -> !predictRule(rule, passedText, lastRule));
         return matchedRules;
     }
 
 
+    /**
+     * Check if passed inside rule can parse give text
+     * @param rule rule to che checked
+     * @param passedText text at the current state of parsing
+     * @param lastRule boolean to track the last rule
+     * @return true if text satisfies rule and false otherwise
+     */
     private boolean predictRule(Rule rule, Queue<Word> passedText, boolean lastRule){
+        // in case of the incomplete sentence
         if (passedText.isEmpty())
             return false;
 
-        Queue<Word> taggedTextCoppy = new ArrayDeque<>(passedText);
+        // deep copy of a text
+        Queue<Word> taggedTextCopy = new ArrayDeque<>(passedText);
         for (String childRule : rule.describeRule()){
+            // exit statement of recursion
             if (isTerminal(childRule)) {
-                Word currentWord = taggedTextCoppy.peek();
+                // not consuming token as multiple call can be made on the same text
+                Word currentWord = taggedTextCopy.peek();
+                assert currentWord != null;
                 if (currentWord.getPos().equals(childRule)) {
-                    taggedTextCoppy.poll();
+                    taggedTextCopy.poll();
                 } else
                     return false;
             } else{
-                ArrayList<Rule> subRules = getValidRules(rules.getRule(childRule), taggedTextCoppy, lastRule);
+                ArrayList<Rule> subRules = getValidRules(rules.getRule(childRule), taggedTextCopy, lastRule);
                 return !subRules.isEmpty();
             }
         }
-        return !lastRule || taggedTextCoppy.isEmpty();
+        return !lastRule || taggedTextCopy.isEmpty();
     }
 
-    public boolean isTerminal(String candidate){
+    /**
+     * @param candidate string to be checked
+     * @return true if passed in string is a terminal (e.g v or det) and false if it is non-terminal (e.g. VP, S)
+     */
+    private boolean isTerminal(String candidate){
         for (int i = 0; i < candidate.length(); i++){
             if (Character.isUpperCase(candidate.charAt(i)))
                 return false;
@@ -150,14 +191,10 @@ public class Parser {
         return true;
     }
 
-    private String printQueue(Queue<Word> queue){
-        String output = "";
-        while (!queue.isEmpty())
-            output += queue.poll().getWord()+" ";
-        return output;
-    }
-
-
+    /**
+     * Ensures that nodes inside the tree are matching each other's numbers (NP numbers must match verb in VP)
+     * @param tree tree to be checked/
+     */
     private void checkTreeNumbers(ParsedNode tree){
         ParsedNode vp, np;
         vp = np = new ParsedNode();
@@ -167,6 +204,8 @@ public class Parser {
                 np = child;
             else if (child.getPOS().equals("VP"))
                 vp = child;
+            else
+                checkTreeNumbers(child);
         }
         if (!vp.getNumber().contains(np.getNumber()) && !np.getNumber().contains(vp.getNumber())){
             System.err.println("Numbers in VP vs NP does not match");
