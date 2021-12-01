@@ -42,7 +42,8 @@ public class ParsedNode {
             if (parsedNode.getPOS().equals("v")){
                 this.word.setNumber(parsedNode.getNumber());
                 children.add(parsedNode);
-            }
+            } else
+                children.add(parsedNode);
         } else
             children.add(parsedNode);
     }
