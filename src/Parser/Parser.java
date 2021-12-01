@@ -123,6 +123,9 @@ public class Parser {
 
 
     private boolean predictRule(Rule rule, Queue<Word> passedText, boolean lastRule){
+        if (passedText.isEmpty())
+            return false;
+
         Queue<Word> taggedTextCoppy = new ArrayDeque<>(passedText);
         for (String childRule : rule.describeRule()){
             if (isTerminal(childRule)) {
