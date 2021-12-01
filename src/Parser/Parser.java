@@ -103,7 +103,8 @@ public class Parser {
             if (isTerminal(childRule)) {
                 // consuming token on valid terminal
                 Word currentWord = taggedText.poll();
-                assert currentWord != null;
+                if (currentWord == null)
+                    return null;
                 if (currentWord.getPos().equals(childRule)) {
                     // this node will be a leaf in a tree. Exit statement for a recursion
                     ParsedNode childNode = new ParsedNode();
@@ -166,7 +167,8 @@ public class Parser {
             if (isTerminal(childRule)) {
                 // not consuming token as multiple call can be made on the same text
                 Word currentWord = taggedTextCopy.peek();
-                assert currentWord != null;
+                if (currentWord == null)
+                    return false;
                 if (currentWord.getPos().equals(childRule)) {
                     taggedTextCopy.poll();
                 } else
