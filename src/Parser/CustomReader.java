@@ -77,13 +77,12 @@ public class CustomReader {
      * @return ArrayList of sentences where each sentence is an ArrayList of Strings that represent words
      */
     public ArrayList<ArrayList<String>> readSentence(File file){
-        ArrayList<String> sentence = new ArrayList<>();
         ArrayList<ArrayList<String>> text = new ArrayList<>();
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
             String line;
             while ((line = bufferedReader.readLine()) != null) {
-                sentence.clear();
+                ArrayList<String> sentence = new ArrayList<>();
                 String [] lineSplit = line.split(" ");
                 sentence.addAll(Arrays.asList(lineSplit));
                 text.add(sentence);
